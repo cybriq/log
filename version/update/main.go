@@ -12,7 +12,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 
-	"github.com/cybriq/log/template/version"
+	"github.com/cybriq/log/version"
 )
 
 var (
@@ -111,7 +111,6 @@ func main() {
 	}
 	Tag = maxString
 	PathBase = tr.Filesystem.Root() + "/"
-	// I.Ln(PathBase)
 	versionFile := `package version
 
 `+`//go:generate go run ./update/.
