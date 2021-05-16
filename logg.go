@@ -68,7 +68,7 @@ type (
 var (
 	logger_started = time.Now()
 	App            = "  main"
-	AppColorizer   = color.White.Sprint
+	AppColorizer   = color.Gray.Sprint
 	// sep is just a convenient shortcut for this very longwinded expression
 	sep          = string(os.PathSeparator)
 	currentLevel = uberatomic.NewInt32(logLevels.Info)
@@ -214,10 +214,10 @@ func SetLogWriteToFile(path, appName string) (e error) {
 	return
 }
 
-// SortSubsystemsList sorts the list of subsystems, to keep the data read-only,
+// sortSubsystemsList sorts the list of subsystems, to keep the data read-only,
 // call this function right at the top of the main, which runs after
 // declarations and main/init. Really this is just here to alert the reader.
-func SortSubsystemsList() {
+func sortSubsystemsList() {
 	sort.Strings(allSubsystems)
 	// fmt.Fprintln(
 	// 	os.Stderr,
@@ -246,6 +246,7 @@ func Add(pathBase string) (subsystem string) {
 		subsystem = strings.Join(split[:len(split)-1], "/")
 		// fmt.Fprintln(os.Stderr, "adding subsystem", subsystem)
 		allSubsystems = append(allSubsystems, subsystem)
+		sortSubsystemsList()
 	}
 	return
 }
@@ -338,7 +339,7 @@ func getTimeText(level int32) string {
 	// if diff > 0 {
 	// 	since = strings.Repeat(" ", diff) + since + " "
 	// }
-	return AppColorizer(time.Now().Format(time.StampMilli))
+	return AppColorizer(logger_started.Format(time.StampMilli))
 }
 
 func _ln(level int32, subsystem string) func(a ...interface{}) {
@@ -378,11 +379,9 @@ func _f(level int32, subsystem string) func(format string, a ...interface{}) {
 					"%-58v%s%s%-6v %s\n",
 					getLoc(2, level, subsystem),
 					getTimeText(level),
-					color.Bit24(20, 20, 20, true).
-						Sprint(AppColorizer(" "+App)),
+					LevelSpecs[level].Colorizer(" "+App),
 					LevelSpecs[level].Colorizer(
-						color.Bit24(20, 20, 20, true).
-							Sprint(" "+LevelSpecs[level].Name+" "),
+						AppColorizer(" "+LevelSpecs[level].Name+" "),
 					),
 					AppColorizer(fmt.Sprintf(format, a...)),
 				),
@@ -404,17 +403,13 @@ func _s(level int32, subsystem string) func(a ...interface{}) {
 					"%-58v%s%s%s%s%s\n",
 					getLoc(2, level, subsystem),
 					getTimeText(level),
-					color.Bit24(20, 20, 20, true).
-						Sprint(AppColorizer(" "+App)),
+					LevelSpecs[level].Colorizer(" "+App),
 					LevelSpecs[level].Colorizer(
-						color.Bit24(20, 20, 20, true).
-							Sprint(" "+LevelSpecs[level].Name+" "),
+						AppColorizer(" "+LevelSpecs[level].Name+" "),
 					),
-					AppColorizer(
-						" spew:",
-					),
+					AppColorizer(" spew:"),
 					fmt.Sprint(
-						color.Bit24(20, 20, 20, true).Sprint("\n\n"+spew.Sdump(a)),
+						AppColorizer("\n\n"+spew.Sdump(a)),
 						"\n",
 					),
 				),
@@ -436,11 +431,9 @@ func _c(level int32, subsystem string) func(closure func() string) {
 					"%-58v%s%s%-6v %s\n",
 					getLoc(2, level, subsystem),
 					getTimeText(level),
-					color.Bit24(20, 20, 20, true).
-						Sprint(AppColorizer(" "+App)),
+					AppColorizer(" "+App),
 					LevelSpecs[level].Colorizer(
-						color.Bit24(20, 20, 20, true).
-							Sprint(" "+LevelSpecs[level].Name+" "),
+						AppColorizer(" "+LevelSpecs[level].Name+" "),
 					),
 					AppColorizer(closure()),
 				),
@@ -463,11 +456,9 @@ func _chk(level int32, subsystem string) func(e error) bool {
 						"%-58v%s%s%-6v %s\n",
 						getLoc(2, level, subsystem),
 						getTimeText(level),
-						color.Bit24(20, 20, 20, true).
-							Sprint(AppColorizer(" "+App)),
+						AppColorizer(" "+App),
 						LevelSpecs[level].Colorizer(
-							color.Bit24(20, 20, 20, true).
-								Sprint(" "+LevelSpecs[level].Name+" "),
+							AppColorizer(" "+LevelSpecs[level].Name+" "),
 						),
 						LevelSpecs[level].Colorizer(joinStrings(" ", e.Error())),
 					),
