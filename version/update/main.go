@@ -120,7 +120,6 @@ import (
 )
 
 var (
-
 	// URL is the git URL for the repository
 	URL = "%s"
 	// GitRef is the gitref, as in refs/heads/branchname
@@ -147,11 +146,11 @@ var (
 // Get returns a pretty printed version information string
 func Get() string {
 	return fmt.Sprint(
-		"\nRepository Information\n"+
+		"\nRepository Information\n",
 		"\tGit repository: "+URL+"\n",
-		"\tBranch: "+GitRef+"\n"+
-		"\tCommit: "+GitCommit+"\n"+
-		"\tBuilt: "+BuildTime+"\n"+
+		"\tBranch: "+GitRef+"\n",
+		"\tCommit: "+GitCommit+"\n",
+		"\tBuilt: "+BuildTime+"\n",
 		"\tTag: "+Tag+"\n",
 		"\tMajor:", Major, "\n",
 		"\tMinor:", Minor, "\n",
