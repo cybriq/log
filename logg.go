@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cybriq/atomic"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gookit/color"
-	uberatomic "go.uber.org/atomic"
 )
 
 const (
@@ -71,7 +71,7 @@ var (
 	AppColorizer   = color.Gray.Sprint
 	// sep is just a convenient shortcut for this very longwinded expression
 	sep          = string(os.PathSeparator)
-	currentLevel = uberatomic.NewInt32(logLevels.Info)
+	currentLevel = atomic.NewInt32(logLevels.Info)
 	// writer can be swapped out for any io.*writer* that you want to use instead of
 	// stdout.
 	writer io.Writer = os.Stderr
@@ -98,14 +98,38 @@ var (
 	}
 	// LevelSpecs specifies the id, string name and color-printing function
 	LevelSpecs = []LevelSpec{
-		{logLevels.Off, "off  ", color.Bit24(0, 0, 0, false).Sprintf},
-		{logLevels.Fatal, "fatal", color.Bit24(128, 0, 0, false).Sprintf},
-		{logLevels.Error, "error", color.Bit24(255, 0, 0, false).Sprintf},
-		{logLevels.Check, "check", color.Bit24(255, 255, 0, false).Sprintf},
-		{logLevels.Warn, "warn ", color.Bit24(0, 255, 0, false).Sprintf},
-		{logLevels.Info, "info ", color.Bit24(255, 255, 0, false).Sprintf},
-		{logLevels.Debug, "debug", color.Bit24(0, 128, 255, false).Sprintf},
-		{logLevels.Trace, "trace", color.Bit24(128, 0, 255, false).Sprintf},
+		{
+			logLevels.Off, "off  ",
+			color.Bit24(0, 0, 0, false).Sprintf,
+		},
+		{
+			logLevels.Fatal, "fatal",
+			color.Bit24(128, 0, 0, false).Sprintf,
+		},
+		{
+			logLevels.Error, "error",
+			color.Bit24(255, 0, 0, false).Sprintf,
+		},
+		{
+			logLevels.Check, "check",
+			color.Bit24(255, 255, 0, false).Sprintf,
+		},
+		{
+			logLevels.Warn, "warn ",
+			color.Bit24(0, 255, 0, false).Sprintf,
+		},
+		{
+			logLevels.Info, "info ",
+			color.Bit24(255, 255, 0, false).Sprintf,
+		},
+		{
+			logLevels.Debug, "debug",
+			color.Bit24(0, 128, 255, false).Sprintf,
+		},
+		{
+			logLevels.Trace, "trace",
+			color.Bit24(128, 0, 255, false).Sprintf,
+		},
 	}
 	Levels = []string{
 		Off,
@@ -117,7 +141,7 @@ var (
 		Debug,
 		Trace,
 	}
-	LogChanDisabled = uberatomic.NewBool(true)
+	LogChanDisabled = atomic.NewBool(true)
 	LogChan         chan Entry
 )
 
@@ -202,8 +226,10 @@ func SetLogWriteToFile(path, appName string) (e error) {
 		}
 	}
 	var fileWriter *os.File
-	if fileWriter, e = os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC,
-		0600); e != nil {
+	if fileWriter, e = os.OpenFile(
+		path, os.O_RDWR|os.O_CREATE|os.O_TRUNC,
+		0600,
+	); e != nil {
 		fmt.Fprintln(os.Stderr, "unable to write log to", path, "error:", e)
 		return
 	}
@@ -460,7 +486,11 @@ func _chk(level int32, subsystem string) func(e error) bool {
 						LevelSpecs[level].Colorizer(
 							AppColorizer(" "+LevelSpecs[level].Name+" "),
 						),
-						LevelSpecs[level].Colorizer(joinStrings(" ", e.Error())),
+						LevelSpecs[level].Colorizer(
+							joinStrings(
+								" ", e.Error(),
+							),
+						),
 					),
 				)
 				return true
@@ -470,8 +500,8 @@ func _chk(level int32, subsystem string) func(e error) bool {
 	}
 }
 
-// joinStrings constructs a string from an slice of interface same as Println but
-// without the terminal newline
+// joinStrings constructs a string from an slice of interface same as Println
+// but without the terminal newline
 func joinStrings(sep string, a ...interface{}) (o string) {
 	for i := range a {
 		o += fmt.Sprint(a[i])
@@ -519,7 +549,9 @@ func getLoc(skip int, level int32, subsystem string) (output string) {
 	_, file, line, _ := runtime.Caller(skip)
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, "getloc panic on subsystem", subsystem, file)
+			fmt.Fprintln(
+				os.Stderr, "getloc panic on subsystem", subsystem, file,
+			)
 		}
 	}()
 	split := strings.Split(file, subsystem)
@@ -541,7 +573,8 @@ func getLoc(skip int, level int32, subsystem string) (output string) {
 	return
 }
 
-// DirectionString is a helper function that returns a string that represents the direction of a connection (inbound or outbound).
+// DirectionString is a helper function that returns a string that represents
+// the direction of a connection (inbound or outbound).
 func DirectionString(inbound bool) string {
 	if inbound {
 		return "inbound"
